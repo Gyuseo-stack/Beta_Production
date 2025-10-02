@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrendFeed - 온보딩</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="onboarding-box">
+            <h1>환영합니다! 👋</h1>
+            <p class="subtitle">맞춤형 트렌드를 위해 정보를 알려주세요</p>
+
+            <form onsubmit="saveProfile(event)">
+                <label>나이</label>
+                <input type="number" id="age" min="10" max="100" placeholder="예: 25" required>
+
+                <label>직업군</label>
+                <select id="occupation" required>
+                    <option value="">선택해주세요</option>
+                    <option value="개발자/엔지니어">개발자/엔지니어</option>
+                    <option value="프로덕트 매니저">프로덕트 매니저</option>
+                    <option value="디자이너">디자이너</option>
+                    <option value="데이터 분석가">데이터 분석가</option>
+                    <option value="마케터">마케터</option>
+                    <option value="창업가/CEO">창업가/CEO</option>
+                    <option value="투자자/VC">투자자/VC</option>
+                    <option value="연구원">연구원</option>
+                    <option value="학생">학생</option>
+                    <option value="기타">기타</option>
+                </select>
+
+                <label>관심 분야 (여러 개 선택 가능)</label>
+                <div class="interest-checkboxes">
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="인공지능/머신러닝">
+                        <span>인공지능/머신러닝</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="클라우드/인프라">
+                        <span>클라우드/인프라</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="프론트엔드">
+                        <span>프론트엔드</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="백엔드">
+                        <span>백엔드</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="DevOps">
+                        <span>DevOps</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="블록체인/Web3">
+                        <span>블록체인/Web3</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="사이버보안">
+                        <span>사이버보안</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="데이터 사이언스">
+                        <span>데이터 사이언스</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="모바일 개발">
+                        <span>모바일 개발</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="게임 개발">
+                        <span>게임 개발</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="IT 정책/규제">
+                        <span>IT 정책/규제</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interest" value="스타트업/벤처">
+                        <span>스타트업/벤처</span>
+                    </label>
+                </div>
+
+                <button type="submit">에이전트 생성하기</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ 여기에 본인의 Supabase 키를 입력하세요
+        const SUPABASE_URL = 'https://hjmbrmdpvcrzthkxwjhm.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqbWJybWRwdmNyenRoa3h3amhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMTUyMDYsImV4cCI6MjA3NDc5MTIwNn0.5VzmIJlwp_o6q7jthr4gbh5aeiTHLazi6Osmzv9Ef4U'
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+        async function saveProfile(e) {
+            e.preventDefault()
+            
+            const userId = localStorage.getItem('userId')
+            if (!userId) {
+                alert('로그인이 필요합니다')
+                window.location.href = 'index.html'
+                return
+            }
+
+            const age = document.getElementById('age').value
+            const occupation = document.getElementById('occupation').value
+            
+            // 체크된 관심사 수집
+            const interestCheckboxes = document.querySelectorAll('input[name="interest"]:checked')
+            const interests = Array.from(interestCheckboxes).map(cb => cb.value).join(', ')
+            
+            if (interests.length === 0) {
+                alert('최소 1개 이상의 관심 분야를 선택해주세요')
+                return
+            }
+
+            // 사용자 정보 업데이트
+            const { error: userError } = await supabase
+                .from('users')
+                .update({ age, occupation, interests })
+                .eq('id', userId)
+
+            if (userError) {
+                alert('저장 실패: ' + userError.message)
+                return
+            }
+
+            // 첫 번째 에이전트 자동 생성 (관심사 기반)
+            const firstInterest = interestCheckboxes[0].value
+            const agentName = `${firstInterest} 트렌드 추적기`
+            
+            const { data: agentData, error: agentError } = await supabase
+                .from('agents')
+                .insert([{ 
+                    user_id: userId, 
+                    name: agentName, 
+                    domain: firstInterest 
+                }])
+                .select()
+
+            if (agentError) {
+                alert('에이전트 생성 실패: ' + agentError.message)
+                return
+            }
+
+            // Mock 키워드 생성
+            await generateMockKeywords(agentData[0].id, firstInterest)
+            
+            // 대시보드로 이동
+            window.location.href = 'dashboard.html'
+        }
+
+        async function generateMockKeywords(agentId, domain) {
+            // 도메인별 맞춤 키워드
+            const keywordsByDomain = {
+                '인공지능/머신러닝': [
+                    { keyword: 'GPT-5 출시 예정', summary: 'OpenAI가 차세대 모델 GPT-5 출시 계획 발표', rank: 1 },
+                    { keyword: 'Gemini 2.0 업데이트', summary: '구글의 AI 모델 성능 대폭 향상', rank: 2 },
+                    { keyword: 'AI 규제법 통과', summary: 'EU AI Act 최종 승인, 2025년 시행', rank: 3 },
+                    { keyword: 'LLaMA 3 오픈소스', summary: 'Meta가 새로운 오픈소스 모델 공개', rank: 4 },
+                    { keyword: 'AI 반도체 경쟁', summary: 'NVIDIA H200 칩 성능 2배 향상', rank: 5 }
+                ],
+                '클라우드/인프라': [
+                    { keyword: 'AWS re:Invent 2025', summary: '새로운 서버리스 서비스 대거 공개', rank: 1 },
+                    { keyword: 'Kubernetes 1.30', summary: '컨테이너 오케스트레이션 주요 업데이트', rank: 2 },
+                    { keyword: '멀티클라우드 전략', summary: '기업들의 클라우드 분산 배치 트렌드', rank: 3 }
+                ],
+                '블록체인/Web3': [
+                    { keyword: '이더리움 2.0 완료', summary: 'Merge 이후 네트워크 안정화', rank: 1 },
+                    { keyword: 'DeFi 새로운 규제', summary: '미국 SEC의 탈중앙화 금융 규제안', rank: 2 },
+                    { keyword: 'NFT 시장 회복', summary: '디지털 자산 거래량 증가세', rank: 3 }
+                ]
+            }
+
+            const keywords = keywordsByDomain[domain] || [
+                { keyword: `${domain} 최신 동향`, summary: '업계 주요 뉴스 및 트렌드 분석', rank: 1 },
+                { keyword: `${domain} 기술 혁신`, summary: '새로운 기술과 도구 소개', rank: 2 },
+                { keyword: `${domain} 시장 전망`, summary: '2025년 전망 및 예측', rank: 3 }
+            ]
+
+            for (let kw of keywords) {
+                await supabase
+                    .from('keywords')
+                    .insert([{ agent_id: agentId, ...kw }])
+            }
+        }
+    </script>
+</body>
+</html>

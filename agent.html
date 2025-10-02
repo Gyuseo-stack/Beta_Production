@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrendFeed - 키워드 피드</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <h1>TrendFeed</h1>
+        <button onclick="goBack()" class="btn-secondary">← 대시보드</button>
+    </nav>
+
+    <div class="container">
+        <div class="feed-header">
+            <h2 id="agent-name">로딩중...</h2>
+            <p id="agent-domain"></p>
+            <div class="date">📅 <span id="today"></span></div>
+        </div>
+
+        <div id="keywords-feed" class="keywords-feed">
+            <!-- 키워드 카드들이 여기 표시됨 -->
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ 여기에 본인의 Supabase 키를 입력하세요
+        const SUPABASE_URL = 'https://hjmbrmdpvcrzthkxwjhm.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqbWJybWRwdmNyenRoa3h3amhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMTUyMDYsImV4cCI6MjA3NDc5MTIwNn0.5VzmIJlwp_o6q7jthr4gbh5aeiTHLazi6Osmzv9Ef4U'
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+        const urlParams = new URLSearchParams(window.location.search)
+        const agentId = urlParams.get('id')
+
+        // 오늘 날짜 표시
+        const today = new Date().toLocaleDateString('ko-KR', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        })
+        document.getElementById('today').textContent = today
+
+        async function loadKeywords() {
+            if (!agentId) {
+                alert('잘못된 접근입니다')
+                window.location.href = 'dashboard.html'
+                return
+            }
+
+            // 에이전트 정보
+            const { data: agent, error: agentError } = await supabase
+                .from('agents')
+                .select()
+                .eq('id', agentId)
+                .single()
+
+            if (agentError || !agent) {
+                alert('에이전트를 찾을 수 없습니다')
+                window.location.href = 'dashboard.html'
+                return
+            }
+
+            document.getElementById('agent-name').textContent = agent.name
+            document.getElementById('agent-domain').textContent = agent.domain
+
+            // 키워드 목록
+            const { data: keywords } = await supabase
+                .from('keywords')
+                .select()
+                .eq('agent_id', agentId)
+                .order('rank', { ascending: true })
+
+            if (keywords && keywords.length > 0) {
+                displayKeywords(keywords)
+            } else {
+                document.getElementById('keywords-feed').innerHTML = `
+                    <div class="empty-state">
+                        <p>아직 키워드가 생성되지 않았습니다</p>
+                        <p class="subtitle">잠시 후 다시 시도해주세요</p>
+                    </div>
+                `
+            }
+        }
+
+        function displayKeywords(keywords) {
+            const container = document.getElementById('keywords-feed')
+            container.innerHTML = keywords.map((kw, i) => `
+                <div class="keyword-card">
+                    <div class="keyword-rank">#${kw.rank || i + 1}</div>
+                    <h3 class="keyword-title">${kw.keyword}</h3>
+                    <p class="keyword-summary">${kw.summary}</p>
+                    <div class="keyword-actions">
+                        <button onclick="viewTimeline('${kw.keyword}')" class="btn-primary">
+                            📊 타임라인 보기
+                        </button>
+                        <button onclick="archive('${kw.id}', '${kw.keyword}')" class="btn-icon">
+                            ⭐ 저장
+                        </button>
+                    </div>
+                    <div class="keyword-meta">
+                        <span>🔗 관련 기사</span>
+                        <a href="https://www.google.com/search?q=${encodeURIComponent(kw.keyword)}&tbm=nws" target="_blank" class="link-external">
+                            Google News
+                        </a>
+                    </div>
+                </div>
+            `).join('')
+        }
+
+        function viewTimeline(keyword) {
+            window.location.href = `timeline.html?keyword=${encodeURIComponent(keyword)}&agent=${agentId}`
+        }
+
+        async function archive(keywordId, keyword) {
+            const userId = localStorage.getItem('userId')
+            
+            const { error } = await supabase
+                .from('archived_keywords')
+                .insert([{ 
+                    user_id: userId, 
+                    keyword_id: keywordId,
+                    keyword: keyword,
+                    archived_at: new Date().toISOString()
+                }])
+
+            if (error) {
+                alert('저장 실패: ' + error.message)
+            } else {
+                alert('✅ 키워드가 저장되었습니다!')
+            }
+        }
+
+        function goBack() {
+            window.location.href = 'dashboard.html'
+        }
+
+        loadKeywords()
+    </script>
+</body>
+</html>

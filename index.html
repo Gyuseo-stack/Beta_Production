@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrendFeed - Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="login-box">
+            <h1>TrendFeed</h1>
+            <p class="subtitle">Context as a Service</p>
+
+            <div id="login-form">
+                <input type="email" id="email" placeholder="이메일" required>
+                <input type="password" id="password" placeholder="비밀번호" required>
+                <button onclick="login()">로그인</button>
+                <p class="toggle">계정이 없으신가요? <a onclick="showSignup()">회원가입</a></p>
+            </div>
+
+            <div id="signup-form" style="display:none">
+                <input type="email" id="signup-email" placeholder="이메일" required>
+                <input type="password" id="signup-password" placeholder="비밀번호" required>
+                <button onclick="signup()">회원가입</button>
+                <p class="toggle">이미 계정이 있으신가요? <a onclick="showLogin()">로그인</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ 여기에 본인의 Supabase 키를 입력하세요
+        const SUPABASE_URL = 'https://hjmbrmdpvcrzthkxwjhm.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqbWJybWRwdmNyenRoa3h3amhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMTUyMDYsImV4cCI6MjA3NDc5MTIwNn0.5VzmIJlwp_o6q7jthr4gbh5aeiTHLazi6Osmzv9Ef4U'
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+        function showSignup() {
+            document.getElementById('login-form').style.display = 'none'
+            document.getElementById('signup-form').style.display = 'block'
+        }
+
+        function showLogin() {
+            document.getElementById('signup-form').style.display = 'none'
+            document.getElementById('login-form').style.display = 'block'
+        }
+
+        async function signup() {
+            const email = document.getElementById('signup-email').value
+            const password = document.getElementById('signup-password').value
+
+            const { data, error } = await supabase
+                .from('users')
+                .insert([{ email, password }])
+                .select()
+
+            if (error) {
+                alert('회원가입 실패: ' + error.message)
+            } else {
+                localStorage.setItem('userId', data[0].id)
+                window.location.href = 'onboarding.html'
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value
+            const password = document.getElementById('password').value
+
+            const { data, error } = await supabase
+                .from('users')
+                .select()
+                .eq('email', email)
+                .eq('password', password)
+                .single()
+
+            if (error || !data) {
+                alert('로그인 실패: 이메일 또는 비밀번호를 확인해주세요')
+            } else {
+                localStorage.setItem('userId', data.id)
+                if (!data.name) {
+                    window.location.href = 'onboarding.html'
+                } else {
+                    window.location.href = 'dashboard.html'
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,837 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* =========================
+   네비게이션
+========================= */
+nav {
+    background: white;
+    padding: 15px 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+nav h1 {
+    color: #667eea;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+nav div {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+nav span {
+    color: #666;
+    font-weight: 500;
+}
+
+/* =========================
+   버튼 스타일
+========================= */
+button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #f1f3f5;
+    color: #495057;
+}
+
+.btn-secondary:hover {
+    background: #e9ecef;
+}
+
+.btn-logout {
+    background: transparent;
+    color: #667eea;
+    border: 1px solid #667eea;
+    padding: 8px 16px;
+}
+
+.btn-logout:hover {
+    background: #667eea;
+    color: white;
+}
+
+.btn-icon {
+    background: transparent;
+    color: #868e96;
+    padding: 8px 16px;
+    border: 1px solid #dee2e6;
+}
+
+.btn-icon:hover {
+    background: #f8f9fa;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+/* =========================
+   로그인/회원가입 박스
+========================= */
+.login-box, .onboarding-box {
+    max-width: 450px;
+    margin: 80px auto;
+    background: white;
+    padding: 50px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.login-box h1, .onboarding-box h1 {
+    text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #868e96;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    color: #495057;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    margin: 8px 0;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+    font-family: inherit;
+}
+
+input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+select {
+    width: 100%;
+    padding: 14px;
+    margin: 8px 0;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+    font-family: inherit;
+    background: white;
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.login-box button, .onboarding-box button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    margin-top: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.login-box button:hover, .onboarding-box button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.toggle {
+    text-align: center;
+    margin-top: 25px;
+    color: #868e96;
+    font-size: 14px;
+}
+
+.toggle a {
+    color: #667eea;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.toggle a:hover {
+    text-decoration: underline;
+}
+
+/* =========================
+   온보딩 체크박스
+========================= */
+.interest-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 15px 0;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.checkbox-item:hover {
+    border-color: #667eea;
+    background: #f8f9fa;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0 10px 0 0;
+    cursor: pointer;
+}
+
+.checkbox-item input[type="checkbox"]:checked + span {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.checkbox-item span {
+    font-size: 14px;
+    color: #495057;
+}
+
+/* =========================
+   에이전트 탭 UI (개선)
+========================= */
+.agent-switch-bar {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.agent-tabs {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 5px 0;
+}
+
+.agent-tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+.agent-tabs::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 3px;
+}
+
+.agent-tab {
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s;
+}
+
+.agent-tab:hover {
+    background: #e9ecef;
+    color: #667eea;
+}
+
+.agent-tab.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+}
+
+/* 기존 인라인 선택기는 숨김 */
+.agent-selector-inline {
+    display: none;
+}
+
+/* =========================
+   마이페이지 스타일
+========================= */
+.profile-view {
+    margin: 20px 0;
+}
+
+.profile-item {
+    padding: 15px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.profile-item:last-child {
+    border-bottom: none;
+}
+
+.profile-item label {
+    display: block;
+    font-size: 13px;
+    color: #868e96;
+    margin-bottom: 5px;
+}
+
+.profile-item p {
+    font-size: 16px;
+    color: #212529;
+    font-weight: 500;
+    margin: 0;
+}
+
+.profile-edit {
+    margin: 20px 0;
+}
+
+/* =========================
+   대시보드
+========================= */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 40px 0;
+    padding: 0 10px;
+}
+
+.dashboard-header h2 {
+    color: white;
+    font-size: 32px;
+}
+
+.agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    margin-top: 30px;
+}
+
+.agent-card {
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.agent-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.agent-card h3 {
+    font-size: 22px;
+    margin-bottom: 12px;
+    color: #212529;
+}
+
+.agent-card p {
+    color: #868e96;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.card-footer {
+    color: #667eea;
+    margin-top: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: white;
+}
+
+.empty-state p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+/* =========================
+   모달
+========================= */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-large {
+    max-width: 700px;
+}
+
+.modal-content h2 {
+    margin-bottom: 25px;
+    color: #212529;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.modal-buttons button {
+    flex: 1;
+}
+
+/* =========================
+   에이전트 관리 모달
+========================= */
+.agent-list {
+    margin-bottom: 30px;
+    padding-bottom: 30px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.agent-list h3, .add-agent-section h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #212529;
+}
+
+.agent-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.agent-item strong {
+    display: block;
+    color: #212529;
+    margin-bottom: 5px;
+}
+
+.agent-item p {
+    color: #868e96;
+    font-size: 14px;
+    margin: 0;
+}
+
+.empty-text {
+    text-align: center;
+    color: #868e96;
+    padding: 20px;
+}
+
+.add-agent-section {
+    margin-top: 20px;
+}
+
+/* =========================
+   온보딩 초기화 섹션
+========================= */
+.reset-section {
+    margin-top: 30px;
+}
+
+.reset-section h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #212529;
+}
+
+.btn-reset {
+    width: 100%;
+    background: #f8f9fa;
+    color: #495057;
+    border: 2px solid #dee2e6;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-reset:hover {
+    background: #e9ecef;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.reset-note {
+    text-align: center;
+    color: #868e96;
+    font-size: 13px;
+    margin-top: 10px;
+}
+
+/* =========================
+   키워드 피드
+========================= */
+.feed-header {
+    text-align: center;
+    margin: 40px 0;
+    color: white;
+}
+
+.feed-header h2 {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.feed-header p {
+    font-size: 18px;
+    opacity: 0.9;
+    margin-bottom: 15px;
+}
+
+.date {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.keywords-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.keyword-card {
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.keyword-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.keyword-rank {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.keyword-title {
+    font-size: 26px;
+    margin: 15px 0;
+    color: #212529;
+    line-height: 1.4;
+}
+
+.keyword-summary {
+    color: #495057;
+    margin: 20px 0;
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+.keyword-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.keyword-actions button {
+    flex: 1;
+}
+
+.keyword-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+    color: #868e96;
+    font-size: 14px;
+}
+
+.link-external {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.link-external:hover {
+    text-decoration: underline;
+}
+
+/* =========================
+   타임라인
+========================= */
+.timeline-title {
+    text-align: center;
+    font-size: 36px;
+    margin: 40px 0 15px;
+    color: white;
+}
+
+.timeline-subtitle {
+    text-align: center;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 50px;
+    font-size: 16px;
+}
+
+.timeline {
+    position: relative;
+    padding: 50px 0;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 100%;
+    background: rgba(255,255,255,0.3);
+}
+
+.timeline-item {
+    margin: 60px 0;
+    position: relative;
+    width: 100%;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background: white;
+    border: 4px solid #667eea;
+    border-radius: 50%;
+    z-index: 10;
+}
+
+.timeline-content {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 45%;
+    position: relative;
+}
+
+.timeline-item.left .timeline-content {
+    margin-right: auto;
+    margin-left: 0;
+}
+
+.timeline-item.right .timeline-content {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.timeline-date {
+    color: #667eea;
+    font-weight: 700;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.timeline-content h3 {
+    font-size: 20px;
+    margin-bottom: 12px;
+    color: #212529;
+}
+
+.timeline-content p {
+    color: #495057;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.timeline-source {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+    color: #868e96;
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* =========================
+   반응형 디자인
+========================= */
+@media (max-width: 768px) {
+    .timeline::before {
+        left: 30px;
+    }
+
+    .timeline-dot {
+        left: 30px;
+    }
+
+    .timeline-content {
+        width: calc(100% - 80px);
+        margin-left: 60px !important;
+        margin-right: 0 !important;
+    }
+
+    .agents-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        gap: 20px;
+        align-items: stretch;
+    }
+
+    nav {
+        padding: 15px;
+    }
+    
+    nav div {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .login-box, .onboarding-box {
+        margin: 40px 20px;
+        padding: 30px;
+    }
+
+    .keyword-actions {
+        flex-direction: column;
+    }
+    
+    .interest-checkboxes {
+        grid-template-columns: 1fr;
+    }
+    
+    .agent-selector-inline {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .agent-selector-inline select {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .agent-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .btn-delete {
+        width: 100%;
+    }
+}

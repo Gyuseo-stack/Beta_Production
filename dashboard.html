@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrendFeed - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <h1>TrendFeed</h1>
+        <div>
+            <button onclick="openMyPage()" class="btn-secondary">👤 마이페이지</button>
+            <button onclick="openAgentModal()" class="btn-secondary">⚙️ 설정</button>
+            <button onclick="logout()" class="btn-logout">로그아웃</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- 에이전트 선택 바 개선 -->
+        <div class="agent-switch-bar">
+            <div class="agent-tabs" id="agent-tabs">
+                <!-- 에이전트 탭들이 여기 표시됨 -->
+            </div>
+        </div>
+
+        <div class="feed-header">
+            <h2 id="agent-name">로딩중...</h2>
+            <p id="agent-domain"></p>
+            <div class="date">📅 <span id="today"></span></div>
+        </div>
+
+        <div id="keywords-feed" class="keywords-feed">
+            <!-- 키워드 카드들이 여기 표시됨 -->
+        </div>
+    </div>
+
+    <!-- 마이페이지 모달 -->
+    <div id="mypage-modal" class="modal" style="display:none" onclick="closeMyPageOnBackdrop(event)">
+        <div class="modal-content">
+            <h2>👤 마이페이지</h2>
+            
+            <form onsubmit="updateProfile(event)">
+                <div class="profile-view" id="profile-view">
+                    <div class="profile-item">
+                        <label>이메일</label>
+                        <p id="view-email">-</p>
+                    </div>
+                    <div class="profile-item">
+                        <label>나이</label>
+                        <p id="view-age">-</p>
+                    </div>
+                    <div class="profile-item">
+                        <label>직업군</label>
+                        <p id="view-occupation">-</p>
+                    </div>
+                    <div class="profile-item">
+                        <label>관심 분야</label>
+                        <p id="view-interests">-</p>
+                    </div>
+                </div>
+
+                <div class="profile-edit" id="profile-edit" style="display:none">
+                    <label>나이</label>
+                    <input type="number" id="edit-age" min="10" max="100">
+
+                    <label>직업군</label>
+                    <select id="edit-occupation">
+                        <option value="">선택해주세요</option>
+                        <option value="개발자/엔지니어">개발자/엔지니어</option>
+                        <option value="프로덕트 매니저">프로덕트 매니저</option>
+                        <option value="디자이너">디자이너</option>
+                        <option value="데이터 분석가">데이터 분석가</option>
+                        <option value="마케터">마케터</option>
+                        <option value="창업가/CEO">창업가/CEO</option>
+                        <option value="투자자/VC">투자자/VC</option>
+                        <option value="연구원">연구원</option>
+                        <option value="학생">학생</option>
+                        <option value="기타">기타</option>
+                    </select>
+
+                    <label>관심 분야 (쉼표로 구분)</label>
+                    <input type="text" id="edit-interests" placeholder="예: AI, 클라우드, 블록체인">
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeMyPage()" class="btn-secondary">닫기</button>
+                    <button type="button" id="edit-btn" onclick="toggleEdit()" class="btn-primary">수정</button>
+                    <button type="submit" id="save-btn" style="display:none" class="btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 설정 모달 -->
+    <div id="agent-modal" class="modal" style="display:none" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-content modal-large">
+            <h2>⚙️ 설정</h2>
+            
+            <div class="agent-list">
+                <h3>내 에이전트 목록</h3>
+                <div id="agent-list-container">
+                    <!-- 에이전트 목록 -->
+                </div>
+            </div>
+
+            <div class="add-agent-section">
+                <h3>새 에이전트 추가</h3>
+                <form onsubmit="createAgent(event)">
+                    <label>에이전트 이름</label>
+                    <input type="text" id="new-agent-name" placeholder="예: AI 트렌드 추적기" required>
+
+                    <label>추적할 분야</label>
+                    <select id="new-agent-domain" required>
+                        <option value="">선택해주세요</option>
+                        <option value="인공지능/머신러닝">인공지능/머신러닝</option>
+                        <option value="클라우드/인프라">클라우드/인프라</option>
+                        <option value="프론트엔드">프론트엔드</option>
+                        <option value="백엔드">백엔드</option>
+                        <option value="DevOps">DevOps</option>
+                        <option value="블록체인/Web3">블록체인/Web3</option>
+                        <option value="사이버보안">사이버보안</option>
+                        <option value="데이터 사이언스">데이터 사이언스</option>
+                        <option value="모바일 개발">모바일 개발</option>
+                        <option value="게임 개발">게임 개발</option>
+                        <option value="IT 정책/규제">IT 정책/규제</option>
+                        <option value="스타트업/벤처">스타트업/벤처</option>
+                    </select>
+
+                    <div class="modal-buttons">
+                        <button type="button" onclick="closeAgentModal()" class="btn-secondary">닫기</button>
+                        <button type="submit" class="btn-primary">추가</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="reset-section">
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #e9ecef;">
+                <h3>계정 설정</h3>
+                <button type="button" onclick="resetOnboarding()" class="btn-reset">
+                    🔄 온보딩 다시 하기
+                </button>
+                <p class="reset-note">관심사와 직업군을 다시 설정할 수 있습니다</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ 여기에 본인의 Supabase 키를 입력하세요
+        const SUPABASE_URL = 'https://hjmbrmdpvcrzthkxwjhm.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqbWJybWRwdmNyenRoa3h3amhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMTUyMDYsImV4cCI6MjA3NDc5MTIwNn0.5VzmIJlwp_o6q7jthr4gbh5aeiTHLazi6Osmzv9Ef4U'
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+        let userId = localStorage.getItem('userId')
+        let currentAgentId = null
+        let userInfo = null // 사용자 정보 저장
+
+        // 오늘 날짜 표시
+        const today = new Date().toLocaleDateString('ko-KR', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        })
+        document.getElementById('today').textContent = today
+
+        async function loadDashboard() {
+            if (!userId) {
+                window.location.href = 'index.html'
+                return
+            }
+
+            // 사용자 정보 로드
+            const { data: user, error: userError } = await supabase
+                .from('users')
+                .select()
+                .eq('id', userId)
+                .single()
+
+            if (userError || !user) {
+                alert('사용자 정보를 불러올 수 없습니다')
+                logout()
+                return
+            }
+
+            userInfo = user // 전역 변수에 저장
+
+            // 에이전트 목록 로드
+            const { data: agents } = await supabase
+                .from('agents')
+                .select()
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+
+            if (agents && agents.length > 0) {
+                loadAgentTabs(agents)
+                currentAgentId = agents[0].id
+                loadKeywords(currentAgentId)
+            } else {
+                document.getElementById('keywords-feed').innerHTML = `
+                    <div class="empty-state">
+                        <p>아직 에이전트가 없습니다</p>
+                        <button onclick="openAgentModal()" class="btn-primary">첫 에이전트 만들기</button>
+                    </div>
+                `
+            }
+        }
+
+        function loadAgentTabs(agents) {
+            const container = document.getElementById('agent-tabs')
+            container.innerHTML = agents.map((agent, i) => `
+                <button 
+                    class="agent-tab ${i === 0 ? 'active' : ''}" 
+                    onclick="switchToAgent('${agent.id}')"
+                    data-agent-id="${agent.id}">
+                    ${agent.name}
+                </button>
+            `).join('')
+        }
+
+        function switchToAgent(agentId) {
+            currentAgentId = agentId
+            
+            // 탭 활성화 상태 변경
+            document.querySelectorAll('.agent-tab').forEach(tab => {
+                if (tab.dataset.agentId === agentId) {
+                    tab.classList.add('active')
+                } else {
+                    tab.classList.remove('active')
+                }
+            })
+            
+            loadKeywords(agentId)
+        }
+
+        async function loadKeywords(agentId) {
+            // 에이전트 정보
+            const { data: agent } = await supabase
+                .from('agents')
+                .select()
+                .eq('id', agentId)
+                .single()
+
+            document.getElementById('agent-name').textContent = agent.name
+            document.getElementById('agent-domain').textContent = agent.domain
+
+            // 키워드 목록
+            const { data: keywords } = await supabase
+                .from('keywords')
+                .select()
+                .eq('agent_id', agentId)
+                .order('rank', { ascending: true })
+
+            if (keywords && keywords.length > 0) {
+                displayKeywords(keywords)
+            } else {
+                document.getElementById('keywords-feed').innerHTML = `
+                    <div class="empty-state">
+                        <p>아직 키워드가 생성되지 않았습니다</p>
+                    </div>
+                `
+            }
+        }
+
+        function displayKeywords(keywords) {
+            const container = document.getElementById('keywords-feed')
+            container.innerHTML = keywords.map((kw, i) => `
+                <div class="keyword-card">
+                    <div class="keyword-rank">#${kw.rank || i + 1}</div>
+                    <h3 class="keyword-title">${kw.keyword}</h3>
+                    <p class="keyword-summary">${kw.summary}</p>
+                    <div class="keyword-actions">
+                        <button onclick="viewTimeline('${kw.keyword}')" class="btn-primary">
+                            📊 타임라인 보기
+                        </button>
+                        <button onclick="archive('${kw.id}', '${kw.keyword}')" class="btn-icon">
+                            ⭐ 저장
+                        </button>
+                    </div>
+                    <div class="keyword-meta">
+                        <span>🔗 관련 기사</span>
+                        <a href="https://www.google.com/search?q=${encodeURIComponent(kw.keyword)}&tbm=nws" target="_blank" class="link-external">
+                            Google News
+                        </a>
+                    </div>
+                </div>
+            `).join('')
+        }
+
+        function viewTimeline(keyword) {
+            window.location.href = `timeline.html?keyword=${encodeURIComponent(keyword)}&agent=${currentAgentId}`
+        }
+
+        async function archive(keywordId, keyword) {
+            const { error } = await supabase
+                .from('archived_keywords')
+                .insert([{ 
+                    user_id: userId, 
+                    keyword_id: keywordId,
+                    keyword: keyword,
+                    archived_at: new Date().toISOString()
+                }])
+
+            if (error) {
+                alert('저장 실패: ' + error.message)
+            } else {
+                alert('✅ 키워드가 저장되었습니다!')
+            }
+        }
+
+        // ========================================
+        // 마이페이지 관련 함수들
+        // ========================================
+        
+        function openMyPage() {
+            if (!userInfo) {
+                alert('사용자 정보를 불러오는 중입니다')
+                return
+            }
+
+            // 정보 표시
+            document.getElementById('view-email').textContent = userInfo.email || '-'
+            document.getElementById('view-age').textContent = userInfo.age || '-'
+            document.getElementById('view-occupation').textContent = userInfo.occupation || '-'
+            document.getElementById('view-interests').textContent = userInfo.interests || '-'
+
+            // 수정 폼에도 값 설정
+            document.getElementById('edit-age').value = userInfo.age || ''
+            document.getElementById('edit-occupation').value = userInfo.occupation || ''
+            document.getElementById('edit-interests').value = userInfo.interests || ''
+
+            document.getElementById('mypage-modal').style.display = 'flex'
+        }
+
+        function closeMyPage() {
+            document.getElementById('mypage-modal').style.display = 'none'
+            // 보기 모드로 돌아가기
+            document.getElementById('profile-view').style.display = 'block'
+            document.getElementById('profile-edit').style.display = 'none'
+            document.getElementById('edit-btn').style.display = 'block'
+            document.getElementById('save-btn').style.display = 'none'
+        }
+
+        function closeMyPageOnBackdrop(event) {
+            if (event.target.id === 'mypage-modal') {
+                closeMyPage()
+            }
+        }
+
+        function toggleEdit() {
+            document.getElementById('profile-view').style.display = 'none'
+            document.getElementById('profile-edit').style.display = 'block'
+            document.getElementById('edit-btn').style.display = 'none'
+            document.getElementById('save-btn').style.display = 'block'
+        }
+
+        async function updateProfile(e) {
+            e.preventDefault()
+
+            const age = document.getElementById('edit-age').value
+            const occupation = document.getElementById('edit-occupation').value
+            const interests = document.getElementById('edit-interests').value
+
+            const { error } = await supabase
+                .from('users')
+                .update({ age, occupation, interests })
+                .eq('id', userId)
+
+            if (error) {
+                alert('수정 실패: ' + error.message)
+            } else {
+                alert('✅ 정보가 업데이트되었습니다!')
+                // 사용자 정보 다시 로드
+                const { data: user } = await supabase
+                    .from('users')
+                    .select()
+                    .eq('id', userId)
+                    .single()
+                
+                userInfo = user
+                closeMyPage()
+            }
+        }
+
+        // ========================================
+        // 설정 모달 관련 함수들
+        // ========================================
+        
+        function openAgentModal() {
+            console.log('설정 모달 열기') // 디버그용
+            loadAgentList()
+            document.getElementById('agent-modal').style.display = 'flex'
+        }
+
+        function closeAgentModal() {
+            document.getElementById('agent-modal').style.display = 'none'
+            document.getElementById('new-agent-name').value = ''
+            document.getElementById('new-agent-domain').value = ''
+        }
+
+        // 모달 배경 클릭 시 닫기
+        function closeModalOnBackdrop(event) {
+            if (event.target.id === 'agent-modal') {
+                closeAgentModal()
+            }
+        }
+
+        async function loadAgentList() {
+            const { data: agents } = await supabase
+                .from('agents')
+                .select()
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+
+            const container = document.getElementById('agent-list-container')
+            if (agents && agents.length > 0) {
+                container.innerHTML = agents.map(agent => `
+                    <div class="agent-item">
+                        <div>
+                            <strong>${agent.name}</strong>
+                            <p>${agent.domain}</p>
+                        </div>
+                        <button onclick="deleteAgent('${agent.id}')" class="btn-delete">삭제</button>
+                    </div>
+                `).join('')
+            } else {
+                container.innerHTML = '<p class="empty-text">에이전트가 없습니다</p>'
+            }
+        }
+
+        async function createAgent(e) {
+            e.preventDefault()
+
+            const name = document.getElementById('new-agent-name').value
+            const domain = document.getElementById('new-agent-domain').value
+
+            const { data, error } = await supabase
+                .from('agents')
+                .insert([{ user_id: userId, name, domain }])
+                .select()
+
+            if (error) {
+                alert('에이전트 생성 실패: ' + error.message)
+            } else {
+                await generateMockKeywords(data[0].id, domain)
+                closeAgentModal()
+                loadDashboard()
+            }
+        }
+
+        async function deleteAgent(agentId) {
+            if (!confirm('정말 이 에이전트를 삭제하시겠습니까?')) {
+                return
+            }
+
+            const { error } = await supabase
+                .from('agents')
+                .delete()
+                .eq('id', agentId)
+
+            if (error) {
+                alert('삭제 실패: ' + error.message)
+            } else {
+                closeAgentModal()
+                loadDashboard()
+            }
+        }
+
+        async function generateMockKeywords(agentId, domain) {
+            const keywordsByDomain = {
+                '인공지능/머신러닝': [
+                    { keyword: 'GPT-5 출시 예정', summary: 'OpenAI가 차세대 모델 GPT-5 출시 계획 발표', rank: 1 },
+                    { keyword: 'Gemini 2.0 업데이트', summary: '구글의 AI 모델 성능 대폭 향상', rank: 2 },
+                    { keyword: 'AI 규제법 통과', summary: 'EU AI Act 최종 승인, 2025년 시행', rank: 3 },
+                    { keyword: 'LLaMA 3 오픈소스', summary: 'Meta가 새로운 오픈소스 모델 공개', rank: 4 },
+                    { keyword: 'AI 반도체 경쟁', summary: 'NVIDIA H200 칩 성능 2배 향상', rank: 5 },
+                    { keyword: 'Claude 4 출시', summary: 'Anthropic의 새로운 AI 어시스턴트 공개', rank: 6 },
+                    { keyword: '멀티모달 AI 발전', summary: '텍스트, 이미지, 음성 통합 모델 등장', rank: 7 },
+                    { keyword: 'AI 에이전트 붐', summary: '자율 작업 수행하는 AI 에이전트 시장 확대', rank: 8 },
+                    { keyword: '오픈소스 AI 생태계', summary: 'Hugging Face 중심 커뮤니티 성장', rank: 9 },
+                    { keyword: 'AI 윤리 가이드라인', summary: '글로벌 기업들의 자체 규제 강화', rank: 10 }
+                ],
+                '클라우드/인프라': [
+                    { keyword: 'AWS re:Invent 2025', summary: '새로운 서버리스 서비스 대거 공개', rank: 1 },
+                    { keyword: 'Kubernetes 1.30', summary: '컨테이너 오케스트레이션 주요 업데이트', rank: 2 },
+                    { keyword: '멀티클라우드 전략', summary: '기업들의 클라우드 분산 배치 트렌드', rank: 3 },
+                    { keyword: 'Edge Computing 확산', summary: '엣지 컴퓨팅 인프라 투자 급증', rank: 4 },
+                    { keyword: 'FinOps 도입', summary: '클라우드 비용 최적화 솔루션 인기', rank: 5 },
+                    { keyword: 'Serverless 2.0', summary: '차세대 서버리스 아키텍처 등장', rank: 6 },
+                    { keyword: 'Infrastructure as Code', summary: 'Terraform, Pulumi 활용 증가', rank: 7 },
+                    { keyword: '클라우드 보안 강화', summary: 'Zero Trust 아키텍처 표준화', rank: 8 },
+                    { keyword: '하이브리드 클라우드', summary: '온프레미스-클라우드 통합 솔루션', rank: 9 },
+                    { keyword: '그린 클라우드', summary: '친환경 데이터센터 확대', rank: 10 }
+                ],
+                '블록체인/Web3': [
+                    { keyword: '이더리움 2.0 완료', summary: 'Merge 이후 네트워크 안정화', rank: 1 },
+                    { keyword: 'DeFi 새로운 규제', summary: '미국 SEC의 탈중앙화 금융 규제안', rank: 2 },
+                    { keyword: 'NFT 시장 회복', summary: '디지털 자산 거래량 증가세', rank: 3 },
+                    { keyword: 'Layer 2 솔루션', summary: 'Optimism, Arbitrum 성장', rank: 4 },
+                    { keyword: '비트코인 ETF 승인', summary: '기관 투자자 유입 가속화', rank: 5 },
+                    { keyword: 'Web3 게임 성장', summary: 'P2E 게임 생태계 확대', rank: 6 },
+                    { keyword: 'DAO 거버넌스', summary: '탈중앙화 조직 운영 모델 발전', rank: 7 },
+                    { keyword: '메타버스 플랫폼', summary: '블록체인 기반 가상세계 구축', rank: 8 },
+                    { keyword: 'CBDC 시범 운영', summary: '중앙은행 디지털화폐 테스트', rank: 9 },
+                    { keyword: '크로스체인 브리지', summary: '블록체인 간 상호운용성 개선', rank: 10 }
+                ],
+                '프론트엔드': [
+                    { keyword: 'React 19 출시', summary: '새로운 Server Components 기능', rank: 1 },
+                    { keyword: 'Next.js 15 업데이트', summary: 'App Router 성능 최적화', rank: 2 },
+                    { keyword: 'Vue 4 개발 중', summary: 'Composition API 개선사항 공개', rank: 3 },
+                    { keyword: 'Tailwind CSS 4.0', summary: '새로운 엔진으로 빌드 속도 향상', rank: 4 },
+                    { keyword: 'TypeScript 5.5', summary: '타입 추론 성능 개선', rank: 5 },
+                    { keyword: 'Vite 6.0 릴리즈', summary: '빌드 도구 생태계 확장', rank: 6 },
+                    { keyword: 'Web Components 부상', summary: '프레임워크 독립적 컴포넌트', rank: 7 },
+                    { keyword: 'Astro 인기 상승', summary: '정적 사이트 생성기 각광', rank: 8 },
+                    { keyword: '프론트엔드 AI 통합', summary: 'AI 기능 내장 프레임워크 등장', rank: 9 },
+                    { keyword: 'Progressive Web Apps', summary: 'PWA 기술 발전과 채택 증가', rank: 10 }
+                ],
+                '백엔드': [
+                    { keyword: 'Rust 백엔드 프레임워크', summary: 'Axum, Actix 생태계 성장', rank: 1 },
+                    { keyword: 'Node.js 22 LTS', summary: '네이티브 TypeScript 지원 강화', rank: 2 },
+                    { keyword: 'GraphQL Federation', summary: '마이크로서비스 간 데이터 통합', rank: 3 },
+                    { keyword: 'gRPC 활용 증가', summary: '고성능 RPC 프레임워크 도입', rank: 4 },
+                    { keyword: 'Serverless 백엔드', summary: 'AWS Lambda, Vercel Functions', rank: 5 },
+                    { keyword: 'PostgreSQL 17', summary: '새로운 성능 최적화 기능', rank: 6 },
+                    { keyword: 'Redis 8.0 출시', summary: '인메모리 DB 기능 확장', rank: 7 },
+                    { keyword: 'API Gateway 패턴', summary: 'Kong, Tyk 같은 솔루션 인기', rank: 8 },
+                    { keyword: 'Event-Driven Architecture', summary: '이벤트 기반 시스템 설계 트렌드', rank: 9 },
+                    { keyword: 'CQRS 패턴 도입', summary: '읽기/쓰기 분리 아키텍처', rank: 10 }
+                ],
+                'DevOps': [
+                    { keyword: 'GitOps 표준화', summary: 'Argo CD, Flux 활용 증가', rank: 1 },
+                    { keyword: 'Platform Engineering', summary: '내부 개발자 플랫폼 구축 트렌드', rank: 2 },
+                    { keyword: 'CI/CD 자동화', summary: 'GitHub Actions, GitLab CI 발전', rank: 3 },
+                    { keyword: 'Observability 도구', summary: 'Datadog, New Relic 기능 강화', rank: 4 },
+                    { keyword: 'Container Security', summary: '컨테이너 보안 스캐닝 필수화', rank: 5 },
+                    { keyword: 'Infrastructure Automation', summary: 'Ansible, Puppet 활용 확대', rank: 6 },
+                    { keyword: 'Service Mesh', summary: 'Istio, Linkerd 도입 증가', rank: 7 },
+                    { keyword: 'Chaos Engineering', summary: '시스템 복원력 테스트 도구', rank: 8 },
+                    { keyword: 'DevSecOps 통합', summary: '보안이 내장된 개발 프로세스', rank: 9 },
+                    { keyword: 'AIOps 등장', summary: 'AI 기반 운영 자동화', rank: 10 }
+                ],
+                '사이버보안': [
+                    { keyword: 'Zero Trust 보안', summary: '신뢰하지 않고 항상 검증하는 모델', rank: 1 },
+                    { keyword: '랜섬웨어 대응', summary: '기업 백업 및 복구 전략 강화', rank: 2 },
+                    { keyword: 'AI 보안 위협', summary: 'DeepFake, 적대적 AI 공격 증가', rank: 3 },
+                    { keyword: 'Supply Chain 보안', summary: '소프트웨어 공급망 보안 강화', rank: 4 },
+                    { keyword: '양자 암호화', summary: '양자컴퓨팅 시대 대비 암호화', rank: 5 },
+                    { keyword: 'SIEM 솔루션', summary: '보안 정보 이벤트 관리 고도화', rank: 6 },
+                    { keyword: '클라우드 보안', summary: 'CSPM, CWPP 도구 필수화', rank: 7 },
+                    { keyword: 'API 보안 강화', summary: 'API 공격 증가에 따른 대응', rank: 8 },
+                    { keyword: 'EDR 솔루션', summary: '엔드포인트 탐지 및 대응', rank: 9 },
+                    { keyword: '보안 컴플라이언스', summary: 'GDPR, ISO 27001 준수', rank: 10 }
+                ],
+                '데이터 사이언스': [
+                    { keyword: 'LLM Fine-tuning', summary: '기업용 커스텀 AI 모델 학습', rank: 1 },
+                    { keyword: 'AutoML 플랫폼', summary: '자동화된 머신러닝 파이프라인', rank: 2 },
+                    { keyword: 'Feature Store', summary: '피처 관리 및 재사용 플랫폼', rank: 3 },
+                    { keyword: 'MLOps 성숙도', summary: 'ML 모델 운영 자동화 확산', rank: 4 },
+                    { keyword: 'Data Mesh 아키텍처', summary: '도메인 중심 데이터 관리', rank: 5 },
+                    { keyword: 'Real-time ML', summary: '실시간 머신러닝 추론', rank: 6 },
+                    { keyword: 'Synthetic Data', summary: '합성 데이터 생성 기술 발전', rank: 7 },
+                    { keyword: 'Federated Learning', summary: '분산 학습으로 프라이버시 보호', rank: 8 },
+                    { keyword: 'XAI 기술', summary: '설명 가능한 AI 모델 개발', rank: 9 },
+                    { keyword: 'Data Quality Tools', summary: 'Great Expectations 등 도구', rank: 10 }
+                ],
+                '모바일 개발': [
+                    { keyword: 'Flutter 3.5', summary: '크로스플랫폼 성능 향상', rank: 1 },
+                    { keyword: 'React Native New Architecture', summary: '새로운 렌더링 엔진 도입', rank: 2 },
+                    { keyword: 'SwiftUI 발전', summary: 'iOS 네이티브 UI 프레임워크', rank: 3 },
+                    { keyword: 'Jetpack Compose', summary: 'Android 선언적 UI 툴킷', rank: 4 },
+                    { keyword: '5G 앱 개발', summary: '초고속 네트워크 활용 앱', rank: 5 },
+                    { keyword: 'AR/VR 모바일 앱', summary: '증강현실 기능 통합 증가', rank: 6 },
+                    { keyword: 'App Clips/Instant Apps', summary: '가벼운 앱 경험 제공', rank: 7 },
+                    { keyword: 'Super Apps', summary: '다기능 통합 앱 트렌드', rank: 8 },
+                    { keyword: 'Mobile Security', summary: '앱 보안 강화 필수', rank: 9 },
+                    { keyword: 'Low-code Mobile', summary: 'FlutterFlow 등 로우코드 도구', rank: 10 }
+                ],
+                '게임 개발': [
+                    { keyword: 'Unreal Engine 5.5', summary: 'Nanite, Lumen 기술 고도화', rank: 1 },
+                    { keyword: 'Unity 6 출시', summary: '새로운 렌더 파이프라인', rank: 2 },
+                    { keyword: 'AI NPC', summary: 'LLM 기반 지능형 캐릭터', rank: 3 },
+                    { keyword: '크로스플랫폼 게임', summary: 'PC, 콘솔, 모바일 동시 지원', rank: 4 },
+                    { keyword: 'Cloud Gaming', summary: 'GeForce Now, Xbox Cloud', rank: 5 },
+                    { keyword: 'Procedural Generation', summary: 'AI 기반 자동 콘텐츠 생성', rank: 6 },
+                    { keyword: 'VR 게임 성장', summary: 'Meta Quest, PSVR2 생태계', rank: 7 },
+                    { keyword: 'Indie Game 붐', summary: '소규모 개발사 성공 사례', rank: 8 },
+                    { keyword: 'Game Engine as Service', summary: '엔진 구독 모델 확산', rank: 9 },
+                    { keyword: 'E-sports 산업', summary: '게임 대회 시장 성장', rank: 10 }
+                ],
+                'IT 정책/규제': [
+                    { keyword: 'AI 규제 법안', summary: 'EU AI Act 시행 준비', rank: 1 },
+                    { keyword: '데이터 프라이버시', summary: 'GDPR 후속 규제 논의', rank: 2 },
+                    { keyword: '빅테크 규제', summary: '독과점 방지법 강화', rank: 3 },
+                    { keyword: '디지털세', summary: '글로벌 IT 기업 과세', rank: 4 },
+                    { keyword: '5G 망 중립성', summary: '네트워크 사용료 논쟁', rank: 5 },
+                    { keyword: 'Open Source 라이선스', summary: '오픈소스 정책 변화', rank: 6 },
+                    { keyword: '플랫폼 책임', summary: '콘텐츠 규제 강화', rank: 7 },
+                    { keyword: '아동 온라인 보호', summary: '미성년자 보호 법안', rank: 8 },
+                    { keyword: '암호화폐 규제', summary: '디지털 자산 법제화', rank: 9 },
+                    { keyword: '탄소중립 정책', summary: 'IT 산업 ESG 규제', rank: 10 }
+                ],
+                '스타트업/벤처': [
+                    { keyword: 'AI 스타트업 투자', summary: '생성형 AI 기업 유니콘 등장', rank: 1 },
+                    { keyword: 'VC 투자 트렌드', summary: '시리즈 A 크런치 현상', rank: 2 },
+                    { keyword: 'Y Combinator 2025', summary: '최신 배치 스타트업 분석', rank: 3 },
+                    { keyword: '유니콘 IPO', summary: '스타트업 상장 시장 회복', rank: 4 },
+                    { keyword: 'Corporate VC', summary: '대기업 벤처캐피탈 활동', rank: 5 },
+                    { keyword: '부트스트랩 성공', summary: '외부 투자 없는 성장 사례', rank: 6 },
+                    { keyword: 'SaaS 밸류에이션', summary: 'B2B SaaS 기업 가치평가', rank: 7 },
+                    { keyword: '액셀러레이터 프로그램', summary: '스타트업 육성 생태계', rank: 8 },
+                    { keyword: 'M&A 활동', summary: '빅테크 인수합병 증가', rank: 9 },
+                    { keyword: '글로벌 확장', summary: '한국 스타트업 해외 진출', rank: 10 }
+                ]
+            }
+
+            const keywords = keywordsByDomain[domain] || [
+                { keyword: `${domain} 최신 동향`, summary: '업계 주요 뉴스 및 트렌드 분석', rank: 1 },
+                { keyword: `${domain} 기술 혁신`, summary: '새로운 기술과 도구 소개', rank: 2 },
+                { keyword: `${domain} 시장 전망`, summary: '2025년 전망 및 예측', rank: 3 },
+                { keyword: `${domain} 베스트 프랙티스`, summary: '업계 모범 사례 공유', rank: 4 },
+                { keyword: `${domain} 인재 채용`, summary: '구인구직 시장 동향', rank: 5 },
+                { keyword: `${domain} 컨퍼런스`, summary: '주요 행사 및 이벤트', rank: 6 },
+                { keyword: `${domain} 오픈소스`, summary: '커뮤니티 프로젝트 소개', rank: 7 },
+                { keyword: `${domain} 케이스 스터디`, summary: '실제 적용 사례 분석', rank: 8 },
+                { keyword: `${domain} 교육 자료`, summary: '학습 리소스 및 강의', rank: 9 },
+                { keyword: `${domain} 글로벌 트렌드`, summary: '해외 시장 동향', rank: 10 }
+            ]
+
+            for (let kw of keywords) {
+                await supabase
+                    .from('keywords')
+                    .insert([{ agent_id: agentId, ...kw }])
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('userId')
+            window.location.href = 'index.html'
+        }
+
+        // 온보딩 초기화
+        async function resetOnboarding() {
+            if (!confirm('온보딩을 다시 진행하시겠습니까?\n현재 설정은 유지되며 새로운 정보로 업데이트됩니다.')) {
+                return
+            }
+
+            // 사용자 정보에서 온보딩 관련 정보만 초기화
+            const { error } = await supabase
+                .from('users')
+                .update({ 
+                    age: null, 
+                    occupation: null, 
+                    interests: null 
+                })
+                .eq('id', userId)
+
+            if (error) {
+                alert('초기화 실패: ' + error.message)
+            } else {
+                alert('온보딩 페이지로 이동합니다')
+                window.location.href = 'onboarding.html'
+            }
+        }
+
+        // 페이지 로드 시 대시보드 초기화
+        loadDashboard()
+    </script>
+</body>
+</html>

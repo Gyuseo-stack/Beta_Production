@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrendFeed - Timeline</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <h1>TrendFeed</h1>
+        <button onclick="goBack()" class="btn-secondary">← 뒤로</button>
+    </nav>
+
+    <div class="container">
+        <h2 id="keyword-title" class="timeline-title">로딩중...</h2>
+        <p class="timeline-subtitle">이 키워드와 관련된 주요 이벤트들을 시간순으로 보여드립니다</p>
+
+        <div class="timeline" id="timeline-container">
+            <!-- 타임라인 이벤트들 -->
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search)
+        const keyword = urlParams.get('keyword')
+        const agentId = urlParams.get('agent')
+
+        if (!keyword) {
+            alert('잘못된 접근입니다')
+            window.location.href = 'dashboard.html'
+        }
+
+        document.getElementById('keyword-title').textContent = `"${keyword}" 타임라인`
+
+        // MVP용 Mock 타임라인 데이터
+        // 실제로는 뉴스 API + 벡터 검색으로 생성
+        const mockTimeline = [
+            { 
+                date: '2024-01-15', 
+                title: '최신 발표', 
+                content: '주요 업데이트가 발표되었습니다. 업계 전문가들은 이를 혁신적인 발전으로 평가하고 있습니다.',
+                source: 'TechCrunch'
+            },
+            { 
+                date: '2024-01-10', 
+                title: '베타 테스트 시작', 
+                content: '선정된 사용자들을 대상으로 베타 버전이 공개되었습니다. 초기 반응은 매우 긍정적입니다.',
+                source: 'The Verge'
+            },
+            { 
+                date: '2023-12-20', 
+                title: '공식 발표', 
+                content: '프로젝트가 공식적으로 발표되었습니다. 주요 기능과 출시 일정이 공개되었습니다.',
+                source: 'Reuters'
+            },
+            { 
+                date: '2023-11-15', 
+                title: '개발 착수', 
+                content: '프로젝트 개발이 시작되었다는 소식이 전해졌습니다. 주요 파트너사들과의 협력도 발표되었습니다.',
+                source: 'Bloomberg'
+            },
+            { 
+                date: '2023-10-01', 
+                title: '초기 아이디어', 
+                content: '콘셉트에 대한 첫 논의가 시작되었습니다. 시장 조사와 타당성 분석이 진행되었습니다.',
+                source: 'VentureBeat'
+            }
+        ]
+
+        function displayTimeline() {
+            const container = document.getElementById('timeline-container')
+            
+            if (mockTimeline.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>타임라인 정보를 찾을 수 없습니다</p>
+                    </div>
+                `
+                return
+            }
+
+            container.innerHTML = mockTimeline.map((event, i) => `
+                <div class="timeline-item ${i % 2 === 0 ? 'left' : 'right'}">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-date">${event.date}</div>
+                        <h3>${event.title}</h3>
+                        <p>${event.content}</p>
+                        <div class="timeline-source">
+                            출처: ${event.source}
+                        </div>
+                    </div>
+                </div>
+            `).join('')
+        }
+
+        function goBack() {
+            if (agentId) {
+                window.location.href = `agent.html?id=${agentId}`
+            } else {
+                window.history.back()
+            }
+        }
+
+        displayTimeline()
+    </script>
+</body>
+</html>
