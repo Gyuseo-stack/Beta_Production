@@ -8,6 +8,31 @@
 - ✅ **지능형 스코어링** - 볼륨, 속도, 권위도, 다양성 기반 트렌드 점수
 - ✅ **간단한 인터페이스** - 로그인 후 바로 트렌드 확인
 
+## ⚡ 빠른 시작 (Quick Start)
+
+### 새로운 팀원을 위한 완전한 설정 가이드
+👉 **[SETUP_GUIDE_KR.md](SETUP_GUIDE_KR.md)** - 상세한 한국어 설정 가이드
+
+### 30초 요약
+```bash
+# 1. 백엔드 설치 및 실행
+cd backend
+npm install
+npm start          # Terminal 1
+
+# 2. 데이터 수집 시작
+npm run worker     # Terminal 2
+
+# 3. Supabase에서 SQL 스키마 실행 (한 번만)
+# backend/database/schema.sql 내용을 복사하여
+# https://supabase.com/dashboard 에서 실행
+
+# 4. 프론트엔드 열기
+start Frontend/index.html
+
+# 5. 10분 대기 후 실시간 데이터 확인!
+```
+
 ## 실행 방법
 
 ### 프론트엔드 (Frontend)
