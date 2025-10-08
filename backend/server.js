@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const config = require('./config');
 const { createClient } = require('@supabase/supabase-js');
+const DataIngestionWorker = require('./workers/dataIngestion');
 
 // Initialize Supabase client
 const supabase = createClient(config.supabase.url, config.supabase.anonKey);
@@ -20,6 +21,89 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     sources: Object.keys(config.sources)
   });
+});
+
+// Get summarized articles
+app.get('/api/articles/summaries', async (req, res) => {
+  try {
+    const { limit = 20 } = req.query;
+    const { data, error } = await supabase
+      .from('article_summaries')
+      .select(`
+        article_id,
+        summary,
+        summary_sentences,
+        raw_articles!inner (
+          id,
+          title,
+          url,
+          published_at,
+          created_at
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(parseInt(limit));
+
+    if (error) throw error;
+
+    const items = (data || []).map((row) => ({
+      id: row.raw_articles.id,
+      title: row.raw_articles.title,
+      url: row.raw_articles.url,
+      published_at: row.raw_articles.published_at,
+      created_at: row.raw_articles.created_at,
+      summary: row.summary,
+      summary_sentences: row.summary_sentences
+    }));
+
+    res.json({ success: true, items });
+  } catch (error) {
+    console.error('Error fetching summaries:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get a single article with summary
+app.get('/api/articles/:id/summary', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from('article_summaries')
+      .select(`
+        article_id,
+        summary,
+        summary_sentences,
+        raw_articles!inner (
+          id,
+          title,
+          content,
+          url,
+          published_at,
+          created_at
+        )
+      `)
+      .eq('raw_articles.id', id)
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      article: {
+        id: data.raw_articles.id,
+        title: data.raw_articles.title,
+        url: data.raw_articles.url,
+        content: data.raw_articles.content,
+        published_at: data.raw_articles.published_at,
+        created_at: data.raw_articles.created_at,
+        summary: data.summary,
+        summary_sentences: data.summary_sentences
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching article summary:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // Get daily trends for a specific domain
@@ -250,6 +334,14 @@ app.listen(PORT, () => {
   console.log(`🚀 TrendFeed Backend running on port ${PORT}`);
   console.log(`📊 Available sources: ${Object.keys(config.sources).join(', ')}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+  // Start ingestion + summarization worker automatically
+  try {
+    const worker = new DataIngestionWorker();
+    worker.start();
+    console.log('🧠 AI module (summarizer) and ingestion worker started');
+  } catch (err) {
+    console.error('❌ Failed to start ingestion/summarizer worker:', err);
+  }
 });
 
 module.exports = app;
