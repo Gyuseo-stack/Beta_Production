@@ -4,7 +4,7 @@
 -- Sources table for tracking data sources
 CREATE TABLE IF NOT EXISTS sources (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
+  name TEXT NOT NULL UNIQUE,
   url TEXT NOT NULL,
   category TEXT NOT NULL CHECK (category IN ('academic', 'code', 'corporate', 'social', 'media', 'other')),
   authority_weight DECIMAL(3,2) NOT NULL DEFAULT 5.0,
