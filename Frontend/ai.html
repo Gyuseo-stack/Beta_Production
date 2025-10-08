@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Summaries</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .summary-list { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .summary-item { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background: #fff; }
+    .summary-item h3 { margin: 0 0 .5rem 0; font-size: 1.1rem; }
+    .summary-item a { text-decoration: none; color: #1a73e8; }
+    .summary-item .meta { color: #666; font-size: .85rem; margin-bottom: .5rem; }
+    .summary-item .summary { color: #222; line-height: 1.5; }
+  </style>
+  <script>
+    async function fetchSummaries() {
+      const endpoint = `${location.protocol}//${location.hostname}:3001/api/articles/summaries?limit=50`;
+      const res = await fetch(endpoint);
+      const data = await res.json();
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      if (!data.success) {
+        list.innerHTML = '<p>Failed to load summaries.</p>';
+        return;
+      }
+      data.items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'summary-item';
+        const published = item.published_at ? new Date(item.published_at).toLocaleString() : '';
+        div.innerHTML = `
+          <h3><a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a></h3>
+          <div class="meta">${published}</div>
+          <div class="summary">${item.summary}</div>
+        `;
+        list.appendChild(div);
+      });
+    }
+    window.addEventListener('DOMContentLoaded', fetchSummaries);
+  </script>
+  </head>
+<body>
+  <div class="summary-list">
+    <h2>AI Summaries</h2>
+    <div id="list"></div>
+  </div>
+</body>
+</html>
+
