@@ -1,0 +1,30 @@
+{
+  "name": "trendfeed-backend",
+  "version": "1.0.0",
+  "description": "Backend API for TrendFeed AI Zeitgeist Engine",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "worker": "node workers/dataIngestion.js",
+    "setup": "node setup.js",
+    "test": "node setup.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "@supabase/supabase-js": "^2.38.4",
+    "axios": "^1.6.2",
+    "node-cron": "^3.0.3",
+    "snoowrap": "^1.23.0",
+    "rss-parser": "^3.13.0",
+    "natural": "^6.7.0",
+    "compromise": "^14.10.0",
+    "cheerio": "^1.0.0-rc.12",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
