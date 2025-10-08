@@ -7,6 +7,7 @@ const ArxivIngestion = require('./sources/arxiv');
 const RSSIngestion = require('./sources/rss');
 const HackerNewsIngestion = require('./sources/hackernews');
 const KeywordProcessor = require('./processors/keywordProcessor');
+const SummarizerProcessor = require('./processors/summarizer');
 
 // Initialize Supabase client
 const supabase = createClient(config.supabase.url, config.supabase.anonKey);
@@ -15,6 +16,7 @@ class DataIngestionWorker {
   constructor() {
     this.isRunning = false;
     this.keywordProcessor = new KeywordProcessor();
+    this.summarizerProcessor = new SummarizerProcessor();
     this.initializeSources();
   }
 
@@ -83,9 +85,18 @@ class DataIngestionWorker {
       await this.processKeywords();
     });
 
+    // Schedule summarization (every 6 hours, offset by 5 minutes)
+    cron.schedule('5 */6 * * *', async () => {
+      console.log('🧠 Starting article summarization...');
+      await this.summarizeArticles();
+    });
+
     // Run initial ingestion
     console.log('🔄 Running initial data ingestion...');
     await this.runInitialIngestion();
+
+    // After initial ingestion + keyword processing, run summarization
+    await this.summarizeArticles();
 
     console.log('✅ Data ingestion worker started successfully');
   }
@@ -102,6 +113,7 @@ class DataIngestionWorker {
       
       // Process keywords after initial ingestion
       await this.processKeywords();
+      await this.summarizeArticles();
     } catch (error) {
       console.error('❌ Error in initial ingestion:', error);
     }
@@ -245,6 +257,14 @@ class DataIngestionWorker {
       console.log('✅ Keyword processing completed');
     } catch (error) {
       console.error('❌ Keyword processing error:', error);
+    }
+  }
+
+  async summarizeArticles() {
+    try {
+      await this.summarizerProcessor.summarizeRecentArticles();
+    } catch (error) {
+      console.error('❌ Summarization workflow error:', error);
     }
   }
 
