@@ -33,6 +33,36 @@ start Frontend/index.html
 # 5. 10분 대기 후 실시간 데이터 확인!
 ```
 
+### Git에 변경사항 적용하기
+프로젝트에 새로운 기능이나 수정을 완료했다면 아래 순서대로 Git에 반영하세요.
+
+1. **작업 브랜치 생성** (선택 사항이지만 권장)
+   ```bash
+   git checkout -b feature/키워드-요약-검증
+   ```
+2. **변경 파일 확인**
+   ```bash
+   git status
+   ```
+3. **커밋에 포함할 파일 선택**
+   ```bash
+   git add Frontend/dashboard.html backend/server.js
+   ```
+   > 특정 파일만 선택해서 올릴 수 있으며, `.` 으로 전체 변경 사항을 추가할 수도 있습니다.
+4. **커밋 메시지 작성 후 커밋 생성**
+   ```bash
+   git commit -m "feat: 키워드 요약 검증 API 추가"
+   ```
+5. **원격 저장소에 푸시**
+   ```bash
+   git push origin feature/키워드-요약-검증
+   ```
+6. **GitHub에서 Pull Request 생성**
+   - 저장소 페이지에 접속하면 새 브랜치에 대한 "Compare & pull request" 버튼이 표시됩니다.
+   - 변경 요약과 테스트 결과를 작성한 뒤 PR을 생성하세요.
+
+> 처음 Git을 사용할 때는 `git config --global user.name` 과 `git config --global user.email` 로 사용자 정보를 먼저 설정해야 합니다.
+
 ## 실행 방법
 
 ### 프론트엔드 (Frontend)
