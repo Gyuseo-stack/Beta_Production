@@ -706,6 +706,11 @@ select:focus {
     font-size: 15px;
 }
 
+.summary-line {
+    display: block;
+    margin-bottom: 6px;
+}
+
 .keyword-actions {
     display: flex;
     gap: 12px;

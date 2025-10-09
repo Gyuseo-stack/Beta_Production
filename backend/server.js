@@ -10,17 +10,267 @@ const supabase = createClient(config.supabase.url, config.supabase.anonKey);
 const app = express();
 const PORT = config.server.port;
 
+/**
+ * Split text into sentences using a conservative regex to avoid overly short fragments.
+ * @param {string} text
+ * @returns {string[]}
+ */
+function splitIntoSentences(text) {
+  if (!text || typeof text !== 'string') return [];
+
+  return text
+    .replace(/\s+/g, ' ')
+    .match(/[^.!?\n]+[.!?]?/g)
+    ?.map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0) || [];
+}
+
+/**
+ * Create a concise 2-3 sentence summary for a keyword from related article snippets.
+ * @param {Array} articles
+ * @param {number} target
+ * @returns {{sentences: string[], text: string}}
+ */
+function buildKeywordSummary(articles, target = 3) {
+  if (!articles || articles.length === 0) {
+    return {
+      sentences: ['관련 기사가 충분하지 않아 요약을 생성할 수 없습니다.'],
+      text: '관련 기사가 충분하지 않아 요약을 생성할 수 없습니다.'
+    };
+  }
+
+  const desiredLength = Math.max(2, target);
+  const sortedArticles = [...articles].sort((a, b) => {
+    const aDate = new Date(a.published_at || a.created_at || 0).getTime();
+    const bDate = new Date(b.published_at || b.created_at || 0).getTime();
+    return bDate - aDate;
+  });
+
+  const collected = [];
+  const seen = new Set();
+
+  for (const article of sortedArticles) {
+    const sentences = splitIntoSentences(article.summary || article.title || '');
+
+    for (const sentence of sentences) {
+      const normalized = sentence.replace(/\s+/g, ' ').trim();
+      if (!normalized || normalized.length < 15) continue;
+      if (seen.has(normalized)) continue;
+
+      collected.push(normalized);
+      seen.add(normalized);
+      if (collected.length >= desiredLength) break;
+    }
+
+    if (collected.length >= desiredLength) break;
+  }
+
+  // Fallback: add article titles if we still don't have enough material
+  if (collected.length < 2) {
+    for (const article of sortedArticles) {
+      if (!article.title) continue;
+      const title = article.title.trim();
+      if (title.length < 10 || seen.has(title)) continue;
+      collected.push(title);
+      seen.add(title);
+      if (collected.length >= desiredLength) break;
+    }
+  }
+
+  const sentences = collected.slice(0, Math.max(2, collected.length));
+  return {
+    sentences,
+    text: sentences.join(' ')
+  };
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Routes
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     sources: Object.keys(config.sources)
   });
+});
+
+// Get AI keyword insights with aggregated summaries
+app.get('/api/keywords/insights', async (req, res) => {
+  try {
+    const { limit = 10, hours = 24 } = req.query;
+    const now = new Date();
+    const start = new Date(now.getTime() - Number(hours) * 60 * 60 * 1000);
+
+    const { data: keywordRows, error } = await supabase
+      .from('extracted_keywords')
+      .select(`
+        id,
+        keyword,
+        keyword_type,
+        confidence_score,
+        created_at,
+        raw_articles!inner (
+          id,
+          title,
+          url,
+          published_at,
+          created_at,
+          sources!inner (
+            name,
+            category
+          )
+        )
+      `)
+      .gte('raw_articles.created_at', start.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (!keywordRows || keywordRows.length === 0) {
+      return res.json({
+        success: true,
+        generated_at: now.toISOString(),
+        window: {
+          hours: Number(hours),
+          start: start.toISOString(),
+          end: now.toISOString()
+        },
+        keywords: []
+      });
+    }
+
+    const articleIds = Array.from(
+      new Set(
+        keywordRows
+          .map((row) => row.raw_articles?.id)
+          .filter(Boolean)
+      )
+    );
+
+    let summaryMap = new Map();
+    if (articleIds.length > 0) {
+      const { data: summaries, error: summaryError } = await supabase
+        .from('article_summaries')
+        .select('article_id, summary, summary_sentences')
+        .in('article_id', articleIds);
+
+      if (summaryError) throw summaryError;
+
+      summaryMap = new Map(
+        (summaries || []).map((item) => [item.article_id, item])
+      );
+    }
+
+    const keywordMap = new Map();
+
+    for (const row of keywordRows) {
+      const normalized = row.keyword?.trim().toLowerCase();
+      if (!normalized) continue;
+
+      if (!keywordMap.has(normalized)) {
+        keywordMap.set(normalized, {
+          keyword: row.keyword.trim(),
+          mentions: [],
+          articles: new Map(),
+          types: new Set(),
+          totalConfidence: 0,
+          firstSeen: row.raw_articles?.created_at || row.created_at,
+          lastSeen: row.raw_articles?.created_at || row.created_at
+        });
+      }
+
+      const group = keywordMap.get(normalized);
+      group.types.add(row.keyword_type || 'unknown');
+      group.totalConfidence += Number(row.confidence_score || 0);
+      group.mentions.push({
+        id: row.id,
+        article_id: row.raw_articles?.id,
+        confidence: row.confidence_score,
+        type: row.keyword_type,
+        created_at: row.created_at
+      });
+
+      const createdAt = row.raw_articles?.created_at || row.created_at;
+      if (!group.firstSeen || new Date(createdAt) < new Date(group.firstSeen)) {
+        group.firstSeen = createdAt;
+      }
+      if (!group.lastSeen || new Date(createdAt) > new Date(group.lastSeen)) {
+        group.lastSeen = createdAt;
+      }
+
+      const articleId = row.raw_articles?.id;
+      if (!articleId || group.articles.has(articleId)) continue;
+
+      const summaryEntry = summaryMap.get(articleId);
+      group.articles.set(articleId, {
+        id: articleId,
+        title: row.raw_articles?.title,
+        url: row.raw_articles?.url,
+        published_at: row.raw_articles?.published_at,
+        created_at: row.raw_articles?.created_at,
+        source: row.raw_articles?.sources?.name || 'Unknown',
+        source_category: row.raw_articles?.sources?.category || 'unknown',
+        summary: summaryEntry?.summary || null,
+        summary_sentences: summaryEntry?.summary_sentences || null
+      });
+    }
+
+    const groupedKeywords = Array.from(keywordMap.values())
+      .map((group) => {
+        const articles = Array.from(group.articles.values());
+        const summary = buildKeywordSummary(articles);
+
+        const uniqueSources = new Set(
+          articles.map((article) => article.source)
+        );
+
+        return {
+          keyword: group.keyword,
+          total_mentions: group.mentions.length,
+          unique_articles: articles.length,
+          unique_sources: uniqueSources.size,
+          average_confidence: Number(
+            (group.totalConfidence / Math.max(1, group.mentions.length)).toFixed(2)
+          ),
+          keyword_types: Array.from(group.types),
+          first_seen: group.firstSeen,
+          last_seen: group.lastSeen,
+          summary: summary.text,
+          summary_sentences: summary.sentences,
+          articles: articles
+            .sort((a, b) => {
+              const aDate = new Date(a.published_at || a.created_at || 0).getTime();
+              const bDate = new Date(b.published_at || b.created_at || 0).getTime();
+              return bDate - aDate;
+            })
+            .slice(0, 10)
+        };
+      })
+      .sort((a, b) => b.total_mentions - a.total_mentions)
+      .slice(0, Number(limit))
+      .map((entry, index) => ({
+        rank: index + 1,
+        ...entry
+      }));
+
+    res.json({
+      success: true,
+      generated_at: now.toISOString(),
+      window: {
+        hours: Number(hours),
+        start: start.toISOString(),
+        end: now.toISOString()
+      },
+      total_keywords: groupedKeywords.length,
+      keywords: groupedKeywords
+    });
+  } catch (error) {
+    console.error('Error generating keyword insights:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // Get summarized articles
